@@ -1,0 +1,79 @@
+app: poc
+service: poc-api
+configValidationMode: error
+
+frameworkVersion: ">=3.19.0"
+
+package:
+  individually: true
+
+custom:
+  apiName: ${self:service}-${self:provider.stage}
+  gatewayUrl: ${self:provider.stage}.${self:app}.app
+
+provider:
+  name: aws
+  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+  profile: alex
+  runtime: provided.al2
+  apiName: ${self:service}
+  architecture: arm64
+  vpc:
+    securityGroupIds:
+      - sg-1a2d5a59
+    subnetIds:
+      - subnet-f730a990
+      - subnet-9724becb
+      - subnet-3f144630
+  httpApi:
+    cors: true
+  environment:
+    stage: ${self:provider.stage}
+    url: ${self:custom.gatewayUrl}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - "*"
+          Resource:
+            - "*"
+
+functions:
+  api-items-get:
+    name: ${self:service}-items-get-${self:provider.stage}
+    handler: bootstrap
+    package:
+      artifact: ./bin/api-items-get.zip
+    events:
+      - httpApi:
+          path: /api/items
+          method: get
+  api-items-post:
+    name: ${self:service}-items-post-${self:provider.stage}
+    handler: bootstrap
+    package:
+      artifact: ./bin/api-items-post.zip
+    events:
+      - httpApi:
+          path: /api/items
+          method: post
+  api-items-_itemId-get:
+    name: ${self:service}-items-_itemId-get-${self:provider.stage}
+    handler: bootstrap
+    package:
+      artifact: ./bin/api-items-_itemId-get.zip
+    events:
+      - httpApi:
+          path: /api/items/{itemId}
+          method: get
+  api-items-_itemId-put:
+    name: ${self:service}-items-_itemId-put-${self:provider.stage}
+    handler: bootstrap
+    package:
+      artifact: ./bin/api-items-_itemId-put.zip
+    events:
+      - httpApi:
+          path: /api/items/{itemId}
+          method: put
